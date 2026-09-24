@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.env
+
+# Tableau temporary files / extractions
+*.twbx_extracted/
+*.tmp
+
+# IDE / Editor settings
+.vscode/
+.idea/
+.DS_Store
