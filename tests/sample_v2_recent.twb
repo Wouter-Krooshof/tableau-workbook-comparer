@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<workbook version='18.2' source-build='2023.3.0' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <document-properties>
+    <author>Analytics Team</author>
+  </document-properties>
+  <preferences>
+    <preference name='ui.encoding.shelf.height' value='24' />
+  </preferences>
+  <datasources>
+    <datasource caption='Parameters' name='Parameters'>
+      <column caption='Region Parameter' datatype='string' name='[Parameter 1]' param-domain-type='all' value='&quot;GLOBAL&quot;'>
+        <members>
+          <member value='&quot;EMEA&quot;' />
+          <member value='&quot;AMER&quot;' />
+          <member value='&quot;APAC&quot;' />
+          <member value='&quot;GLOBAL&quot;' />
+        </members>
+      </column>
+      <column caption='Discount Rate Threshold' datatype='real' name='[Parameter 2]' param-domain-type='range' value='0.15'>
+      </column>
+    </datasource>
+    <datasource caption='Sales Orders DB' inline='true' name='federated.123456'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection name='snowflake_orders'>
+            <connection class='snowflake' dbname='KRAMP_DW' schema='PRESENTATION' server='kramp.snowflakecomputing.com' />
+          </named-connection>
+        </named-connections>
+        <relation name='Custom SQL Query' type='text'>
+          SELECT order_id, customer_id, order_date, sales, profit, discount_amount
+          FROM presentation.fact_sales_orders
+          WHERE order_date >= '2023-01-01'
+        </relation>
+      </connection>
+      <column caption='Profit Margin' datatype='real' role='measure' name='[Calculation_001]'>
+        <calculation class='tableau' formula='IF SUM([sales]) > 0 THEN SUM([profit]) / SUM([sales]) ELSE 0 END' />
+      </column>
+      <column caption='Customer CLV' datatype='real' role='measure' name='[Calculation_002]'>
+        <calculation class='tableau' formula='SUM([sales]) * 1.25' />
+      </column>
+      <column caption='Customer ID' datatype='string' role='dimension' type='nominal' name='[customer_id]' />
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Sales Overview'>
+      <table>
+        <rows>[federated.123456].[Calculation_001]</rows>
+        <cols>[federated.123456].[customer_id]</cols>
+        <panes>
+          <pane>
+            <mark class='line' />
+            <encodings>
+              <encoding attr='color' field='[federated.123456].[Calculation_001]' />
+              <encoding attr='size' field='[federated.123456].[Calculation_002]' />
+            </encodings>
+          </pane>
+        </panes>
+        <slices>
+          <slice>[federated.123456].[Parameter 1]</slice>
+        </slices>
+      </table>
+    </worksheet>
+    <worksheet name='Customer Retention Analysis'>
+      <table>
+        <rows>[federated.123456].[customer_id]</rows>
+        <cols>[federated.123456].[Calculation_002]</cols>
+      </table>
+    </worksheet>
+  </worksheets>
+  <dashboards>
+    <dashboard name='Executive Sales Dashboard'>
+      <style />
+      <size preset='fixed' maxheight='900' maxwidth='1400' />
+      <zones>
+        <zone type-HP='worksheet' name='Sales Overview' />
+        <zone type-HP='worksheet' name='Customer Retention Analysis' />
+      </zones>
+    </dashboard>
+  </dashboards>
+  <actions>
+    <action caption='Filter to Customer' name='[Action 1]'>
+      <activation type='on-select' />
+      <filter-action>
+        <source worksheet='Sales Overview' />
+        <target worksheet='Customer Retention Analysis' />
+      </filter-action>
+    </action>
+  </actions>
+</workbook>

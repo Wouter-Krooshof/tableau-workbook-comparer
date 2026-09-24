@@ -1,0 +1,81 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<workbook version='18.1' source-build='2023.2.0' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <document-properties>
+    <author>Analytics Team</author>
+  </document-properties>
+  <preferences>
+    <preference name='ui.encoding.shelf.height' value='24' />
+  </preferences>
+  <datasources>
+    <datasource caption='Parameters' name='Parameters'>
+      <column caption='Region Parameter' datatype='string' name='[Parameter 1]' param-domain-type='all' value='&quot;EMEA&quot;'>
+        <members>
+          <member value='&quot;EMEA&quot;' />
+          <member value='&quot;AMER&quot;' />
+          <member value='&quot;APAC&quot;' />
+        </members>
+      </column>
+    </datasource>
+    <datasource caption='Sales Orders DB' inline='true' name='federated.123456'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection name='snowflake_orders'>
+            <connection class='snowflake' dbname='KRAMP_DW' schema='PRESENTATION' server='kramp.snowflakecomputing.com' />
+          </named-connection>
+        </named-connections>
+        <relation name='Custom SQL Query' type='text'>
+          SELECT order_id, customer_id, order_date, sales, profit
+          FROM presentation.fact_sales_orders
+          WHERE order_date >= '2023-01-01'
+        </relation>
+      </connection>
+      <column caption='Profit Margin' datatype='real' role='measure' name='[Calculation_001]'>
+        <calculation class='tableau' formula='SUM([profit]) / SUM([sales])' />
+      </column>
+      <column caption='Customer ID' datatype='string' role='dimension' type='nominal' name='[customer_id]' />
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Sales Overview'>
+      <table>
+        <rows>[federated.123456].[Calculation_001]</rows>
+        <cols>[federated.123456].[customer_id]</cols>
+        <panes>
+          <pane>
+            <mark class='bar' />
+            <encodings>
+              <encoding attr='color' field='[federated.123456].[Calculation_001]' />
+            </encodings>
+          </pane>
+        </panes>
+        <slices>
+          <slice>[federated.123456].[Parameter 1]</slice>
+        </slices>
+      </table>
+    </worksheet>
+    <worksheet name='Deprecated Regional Sheet'>
+      <table>
+        <rows>[federated.123456].[customer_id]</rows>
+        <cols />
+      </table>
+    </worksheet>
+  </worksheets>
+  <dashboards>
+    <dashboard name='Executive Sales Dashboard'>
+      <style />
+      <size preset='automatic' maxheight='800' maxwidth='1200' />
+      <zones>
+        <zone type-HP='worksheet' name='Sales Overview' />
+      </zones>
+    </dashboard>
+  </dashboards>
+  <actions>
+    <action caption='Filter to Customer' name='[Action 1]'>
+      <activation type='on-select' />
+      <filter-action>
+        <source worksheet='Sales Overview' />
+        <target worksheet='Executive Sales Dashboard' />
+      </filter-action>
+    </action>
+  </actions>
+</workbook>
